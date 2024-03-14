@@ -1,11 +1,26 @@
 #!/bin/bash
 
 declare ARKHAMDB_API_URL='https://arkhamdb.com/api/public'
-declare CARDS_CACHE="${HOME}/.arkhamdb/cards"
+declare ARKHAMDB_CACHE="${HOME}/.arkhamdb"
+declare PACKS_CACHE="${ARKHAMDB_CACHE}/packs.json"
+declare CARDS_CACHE="${ARKHAMDB_CACHE}/cards"
 declare ALPHABETICAL_ORDER=false
 declare RELEASE_ORDER=false
 declare SUPER_ALPHABETICAL_ORDER=false
 declare DECK_JSON
+
+get_packs_file() {
+  if [ ! -d $ARKHAMDB_CACHE ]; then
+    mkdir -p $ARKHAMDB_CACHE
+  fi
+
+  if [ ! -f $PACKS_CACHE ]; then
+    curl -so "$PACKS_CACHE" "${ARKHAMDB_API_URL}/packs/"
+  fi
+
+  local -a pack_ids=($(jq -r '.[] | @text "\(.code)=\(.id)"' <$PACKS_CACHE))
+  export "${pack_ids[@]}"
+}
 
 print_faction_color() {
   local faction_code="$1"
@@ -111,7 +126,7 @@ print_factions() {
     print_faction_heading $faction_code $subtype_code
     for card_json in $(jq -c --arg alpha $ALPHABETICAL_ORDER 'if $alpha == "true"
     then sort_by(.real_name) | .[]
-    else .[] end' <<<"$faction_json"); do
+    else sort_by(.pack_code as $pack | env[$pack] | tonumber) | .[] end' <<<"$faction_json"); do
       print_card "$card_json"
     done
   done
@@ -128,7 +143,7 @@ print_alphabetically() {
 print_cards() {
   local IFS='
 '
-  for card_json in $(jq -cn 'inputs' "$@"); do
+  for card_json in $(jq -cn '[inputs] | sort_by(.pack_code as $pack | env[$pack] | tonumber) | .[]' "$@"); do
     print_card "$card_json"
   done
 }
@@ -160,6 +175,8 @@ print_deck() {
     print_factions "$cards_json"
   fi
 }
+
+get_packs_file
 
 while getopts 'd:l:ar' opt; do
   case $opt in

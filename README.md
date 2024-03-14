@@ -178,8 +178,8 @@ Kōhaku, Fifty Shades of Blurse|FHV Intro|Deck Guide
 
 ## Caching
 
-ArkhamDB CLI caches the loaded cards to your home directory under `~/.arkhamdb/cards`. To remove the cached
-cards run the following command:
+ArkhamDB CLI caches the loaded cards and pack list to your home directory under `~/.arkhamdb`.
+To remove the cache run the following command:
 
 ```sh
 rm -rf ~/.arkhamdb
