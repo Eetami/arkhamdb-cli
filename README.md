@@ -26,6 +26,12 @@ By default arkhamdbcli prints cards in release order grouped by class.
 
   Print class in alphabetical order.
   Combining with another -a options prints the cards in absolute alphabetical order instead.
+  Can be combined with -p.
+
+* -p
+
+  Print packs in faction order.
+  Can be combined with -a.
 
 * -r
 
@@ -48,7 +54,7 @@ Print a popular decklist grouped by class:
 
 ```console
 $ arkhamdbcli -l 47001
-Kōhaku, Fifty Shades of Blurse|FHV Intro|Deck Guide
+Kōhaku, Fifty Shades of Blurse|FHV Intro|Deck Guide (Kōhaku Narukami)
  Seeker cards
   2 × Deep Knowledge (The Innsmouth Conspiracy #23)
   2 × Fey (A Light in the Fog #222)
@@ -84,7 +90,7 @@ Print a popular decklist grouped by class in alphabetical order:
 
 ```console
 $ arkhamdbcli -l 47001 -a
-Kōhaku, Fifty Shades of Blurse|FHV Intro|Deck Guide
+Kōhaku, Fifty Shades of Blurse|FHV Intro|Deck Guide (Kōhaku Narukami)
  Seeker cards
   2 × Deep Knowledge (The Innsmouth Conspiracy #23)
   2 × Fey (A Light in the Fog #222)
@@ -116,11 +122,129 @@ Kōhaku, Fifty Shades of Blurse|FHV Intro|Deck Guide
   1 × Weeping Yurei (The Feast of Hemlock Vale Investigator Expansion #14)
 ```
 
+Print a popular decklist grouped by pack grouped by class:
+
+```console
+$ arkhamdbcli -l 47001 -p
+Kōhaku, Fifty Shades of Blurse|FHV Intro|Deck Guide (Kōhaku Narukami)
+Core Set
+ Neutral cards
+  2 × Guts (Core Set #89)
+  2 × Perception (Core Set #90)
+ Weakness cards
+  3 × Random Basic Weakness (Core Set #1000)
+The Search for Kadath
+ Mystic cards
+  1 × Read the Signs (The Search for Kadath #117)
+Dark Side of the Moon
+ Mystic cards
+  1 × Spectral Razor (Dark Side of the Moon #201)
+Jacqueline Fine
+ Mystic cards
+  2 × Prescient (Jacqueline Fine #19)
+The Innsmouth Conspiracy
+ Seeker cards
+  2 × Deep Knowledge (The Innsmouth Conspiracy #23)
+ Rogue cards
+  2 × Faustian Bargain (The Innsmouth Conspiracy #28)
+ Mystic cards
+  2 × Promise of Power (The Innsmouth Conspiracy #32)
+Return to the Forgotten Age
+ Neutral cards
+  2 × Backpack (Return to the Forgotten Age #11)
+In Too Deep
+ Mystic cards
+  2 × Armageddon (In Too Deep #117)
+ Survivor cards
+  1 × Ancient Covenant (In Too Deep #122)
+A Light in the Fog
+ Seeker cards
+  2 × Fey (A Light in the Fog #222)
+The Lair of Dagon
+ Neutral cards
+  2 × Favor of the Moon (The Lair of Dagon #271)
+Edge of the Earth Investigator Expansion
+ Neutral cards
+  1 × In the Thick of It (Edge of the Earth Investigator Expansion #125)
+The Feast of Hemlock Vale Investigator Expansion
+ Seeker cards
+  2 × Gabriel Carillo (The Feast of Hemlock Vale Investigator Expansion #52)
+  1 × Prismatic Spectacles (The Feast of Hemlock Vale Investigator Expansion #56)
+ Mystic cards
+  1 × Read the Signs (The Feast of Hemlock Vale Investigator Expansion #101)
+  1 × Spectral Razor (The Feast of Hemlock Vale Investigator Expansion #102)
+  2 × The Key of Solomon (The Feast of Hemlock Vale Investigator Expansion #104)
+  1 × Seal of the Elders (The Feast of Hemlock Vale Investigator Expansion #105)
+ Neutral cards
+  1 × Book of Living Myths (The Feast of Hemlock Vale Investigator Expansion #13)
+ Weakness cards
+  1 × Weeping Yurei (The Feast of Hemlock Vale Investigator Expansion #14)
+```
+
+Print a popular decklist grouped by pack grouped by class in alphabetical order:
+
+```console
+$ arkhamdbcli -l 47001 -ap
+Kōhaku, Fifty Shades of Blurse|FHV Intro|Deck Guide (Kōhaku Narukami)
+Core Set
+ Neutral cards
+  2 × Guts (Core Set #89)
+  2 × Perception (Core Set #90)
+ Weakness cards
+  3 × Random Basic Weakness (Core Set #1000)
+The Search for Kadath
+ Mystic cards
+  1 × Read the Signs (The Search for Kadath #117)
+Dark Side of the Moon
+ Mystic cards
+  1 × Spectral Razor (Dark Side of the Moon #201)
+Jacqueline Fine
+ Mystic cards
+  2 × Prescient (Jacqueline Fine #19)
+The Innsmouth Conspiracy
+ Seeker cards
+  2 × Deep Knowledge (The Innsmouth Conspiracy #23)
+ Rogue cards
+  2 × Faustian Bargain (The Innsmouth Conspiracy #28)
+ Mystic cards
+  2 × Promise of Power (The Innsmouth Conspiracy #32)
+Return to the Forgotten Age
+ Neutral cards
+  2 × Backpack (Return to the Forgotten Age #11)
+In Too Deep
+ Mystic cards
+  2 × Armageddon (In Too Deep #117)
+ Survivor cards
+  1 × Ancient Covenant (In Too Deep #122)
+A Light in the Fog
+ Seeker cards
+  2 × Fey (A Light in the Fog #222)
+The Lair of Dagon
+ Neutral cards
+  2 × Favor of the Moon (The Lair of Dagon #271)
+Edge of the Earth Investigator Expansion
+ Neutral cards
+  1 × In the Thick of It (Edge of the Earth Investigator Expansion #125)
+The Feast of Hemlock Vale Investigator Expansion
+ Seeker cards
+  2 × Gabriel Carillo (The Feast of Hemlock Vale Investigator Expansion #52)
+  1 × Prismatic Spectacles (The Feast of Hemlock Vale Investigator Expansion #56)
+ Mystic cards
+  1 × Read the Signs (The Feast of Hemlock Vale Investigator Expansion #101)
+  1 × Seal of the Elders (The Feast of Hemlock Vale Investigator Expansion #105)
+  1 × Spectral Razor (The Feast of Hemlock Vale Investigator Expansion #102)
+  2 × The Key of Solomon (The Feast of Hemlock Vale Investigator Expansion #104)
+ Neutral cards
+  1 × Book of Living Myths (The Feast of Hemlock Vale Investigator Expansion #13)
+ Weakness cards
+  1 × Weeping Yurei (The Feast of Hemlock Vale Investigator Expansion #14)
+```
+
 Print a popular decklist in absolute release order:
 
 ```console
 $ arkhamdbcli -l 47001 -r
-Kōhaku, Fifty Shades of Blurse|FHV Intro|Deck Guide
+Kōhaku, Fifty Shades of Blurse|FHV Intro|Deck Guide (Kōhaku Narukami)
   3 × Random Basic Weakness (Core Set #1000)
   2 × Guts (Core Set #89)
   2 × Perception (Core Set #90)
@@ -150,7 +274,7 @@ Print a popular decklist in absolute alphabetical order (you madman!):
 
 ```console
 $ arkhamdbcli -l 47001 -aa
-Kōhaku, Fifty Shades of Blurse|FHV Intro|Deck Guide
+Kōhaku, Fifty Shades of Blurse|FHV Intro|Deck Guide (Kōhaku Narukami)
   1 × Ancient Covenant (In Too Deep #122)
   2 × Armageddon (In Too Deep #117)
   2 × Backpack (Return to the Forgotten Age #11)

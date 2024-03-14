@@ -5,6 +5,7 @@ declare ARKHAMDB_CACHE="${HOME}/.arkhamdb"
 declare PACKS_CACHE="${ARKHAMDB_CACHE}/packs.json"
 declare CARDS_CACHE="${ARKHAMDB_CACHE}/cards"
 declare ALPHABETICAL_ORDER=false
+declare PACK_ORDER=false
 declare RELEASE_ORDER=false
 declare SUPER_ALPHABETICAL_ORDER=false
 declare DECK_JSON
@@ -148,10 +149,30 @@ print_cards() {
   done
 }
 
+print_packs() {
+  local IFS='
+'
+  for pack_json in $(jq -cn '[inputs] | group_by(.pack_code as $pack | env[$pack] | tonumber) | .[]' "$@"); do
+    local pack_name=$(jq -r '.[0].pack_name' <<<"$pack_json")
+    printf '%s\n' "$pack_name"
+    local factions_json=$(jq -c 'group_by(if .faction_code == "guardian" then 1
+      elif .faction_code == "seeker" then 2
+      elif .faction_code == "rogue" then 3
+      elif .faction_code == "mystic" then 4
+      elif .faction_code == "survivor" then 5
+      elif .subtype_code == "basicweakness" then 7
+      elif .subtype_code == "weakness" then 7
+      elif .faction_code == "neutral" then 6
+      else 99 end)' <<<"$pack_json")
+    print_factions "$factions_json"
+  done
+}
+
 print_deck() {
   local deck_name=$(jq -r '.name' <<<"$DECK_JSON")
+  local investigator_name=$(jq -r '.investigator_name' <<<"$DECK_JSON")
 
-  printf '%s\n' "$deck_name"
+  printf '%s (\e[90m%s\e[0m)\n' "$deck_name" "$investigator_name"
 
   local -a card_files
   for card_id_json in $(jq -r '.slots | keys | .[]' <<<"$DECK_JSON"); do
@@ -162,6 +183,8 @@ print_deck() {
     print_alphabetically "${card_files[@]}"
   elif $RELEASE_ORDER; then
     print_cards "${card_files[@]}"
+  elif $PACK_ORDER; then
+    print_packs "${card_files[@]}"
   else
     local cards_json=$(jq -cn '[inputs] | group_by(if .faction_code == "guardian" then 1
       elif .faction_code == "seeker" then 2
@@ -178,7 +201,7 @@ print_deck() {
 
 get_packs_file
 
-while getopts 'd:l:ar' opt; do
+while getopts 'd:l:apr' opt; do
   case $opt in
     d)
       DECK_JSON="$(curl -s "${ARKHAMDB_API_URL}/deck/${OPTARG}")"
@@ -191,6 +214,9 @@ while getopts 'd:l:ar' opt; do
         SUPER_ALPHABETICAL_ORDER=true
       fi
       ALPHABETICAL_ORDER=true
+      ;;
+    p)
+      PACK_ORDER=true
       ;;
     r)
       RELEASE_ORDER=true
