@@ -39,8 +39,8 @@ curl -s https://arkhamdb.com/api/public/decklist/101 | arkhamdbcli
 
 ## ArkhamDB API
 
-arkhamdbcli only supports public APIs. To print you private decks you need to fetch them
-using the OAuth API yourself, and feed the JSON to arkhamdb cli via stdin.
+ArkhamDB CLI only supports public APIs. To print you private decks you need to fetch them
+using the OAuth API yourself, and feed the JSON to `arkhamdbcli` via stdin.
 
 ## Examples
 
@@ -178,7 +178,7 @@ Kōhaku, Fifty Shades of Blurse|FHV Intro|Deck Guide
 
 ## Caching
 
-arkhamdbcli caches the loaded cards to your home directory under `~/.arkhamdb/cards`. To remove the cached
+ArkhamDB CLI caches the loaded cards to your home directory under `~/.arkhamdb/cards`. To remove the cached
 cards run the following command:
 
 ```sh
