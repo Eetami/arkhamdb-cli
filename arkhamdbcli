@@ -1,0 +1,192 @@
+#!/bin/bash
+
+declare ARKHAMDB_API_URL='https://arkhamdb.com/api/public'
+declare CARDS_CACHE="${HOME}/.arkhamdb/cards"
+declare ALPHABETICAL_ORDER=false
+declare RELEASE_ORDER=false
+declare SUPER_ALPHABETICAL_ORDER=false
+declare DECK_JSON
+
+print_faction_color() {
+  local faction_code="$1"
+  case $faction_code in
+    'survivor')
+      printf '\e[91m'
+      ;;
+    'seeker')
+      printf '\e[93m'
+      ;;
+    'guardian')
+      printf '\e[96m'
+      ;;
+    'rogue')
+      printf '\e[92m'
+      ;;
+    'mystic')
+      printf '\e[95m'
+      ;;
+    'neutral')
+      printf '\e[90m'
+      ;;
+  esac
+}
+
+print_card() {
+  local card_json="$1"
+
+  local card_id="$(jq -r '.code' <<<$card_json)"
+  local amount=$(jq -r --arg card_id $card_id '.slots[$card_id]' <<<"${DECK_JSON}")
+  local faction_code="$(jq -r '.faction_code' <<<$card_json)"
+  local card_name="$(jq -r '.real_name' <<<$card_json)"
+  local pack_name="$(jq -r '.pack_name' <<<$card_json)"
+  local position="$(jq -r '.position' <<<$card_json)"
+
+  printf '  %d \u00D7 ' "$amount"
+
+  print_faction_color "$faction_code"
+
+  printf '%s\e[0m ' "$card_name"
+
+  printf '(%s #%d)\n' "$pack_name" "$position"
+}
+
+get_card_file() {
+  local card_id="$1"
+
+  if [ ! -d $CARDS_CACHE ]; then
+    mkdir -p $CARDS_CACHE
+  fi
+
+  if [ ! -f $CARDS_CACHE/$card_id ]; then
+    curl -so $CARDS_CACHE/$card_id "${ARKHAMDB_API_URL}/card/${card_id}"
+  fi
+
+  echo "$CARDS_CACHE/$card_id"
+}
+
+print_faction_heading() {
+  local faction_code="$1"
+  local subtype_code="$2"
+
+  print_faction_color $faction_code
+
+  printf ' '
+
+  if [ "$subtype_code" = "basicweakness" ] || [ "$subtype_code" = "weakness" ]; then
+    printf 'Weakness cards'
+  else
+    case $faction_code in
+      'survivor')
+        printf 'Survivor cards'
+        ;;
+      'seeker')
+        printf 'Seeker cards'
+        ;;
+      'guardian')
+        printf 'Guardian cards'
+        ;;
+      'rogue')
+        printf 'Rogue cards'
+        ;;
+      'mystic')
+        printf 'Mystic cards'
+        ;;
+      'neutral')
+        printf 'Neutral cards'
+        ;;
+    esac
+  fi
+
+  printf '\e[0m\n'
+}
+
+print_factions() {
+  local cards_json="$1"
+
+  local IFS='
+'
+  for faction_json in $(jq -c '.[]' <<<"$cards_json"); do
+    local faction_code=$(jq -r '.[0].faction_code' <<<"$faction_json")
+    local subtype_code=$(jq -r '.[0].subtype_code' <<<"$faction_json")
+    print_faction_heading $faction_code $subtype_code
+    for card_json in $(jq -c --arg alpha $ALPHABETICAL_ORDER 'if $alpha == "true"
+    then sort_by(.real_name) | .[]
+    else .[] end' <<<"$faction_json"); do
+      print_card "$card_json"
+    done
+  done
+}
+
+print_alphabetically() {
+  local IFS='
+'
+  for card_json in $(jq -cn '[inputs] | sort_by(.real_name) | .[]' "$@"); do
+    print_card "$card_json"
+  done
+}
+
+print_cards() {
+  local IFS='
+'
+  for card_json in $(jq -cn 'inputs' "$@"); do
+    print_card "$card_json"
+  done
+}
+
+print_deck() {
+  local deck_name=$(jq -r '.name' <<<"$DECK_JSON")
+
+  printf '%s\n' "$deck_name"
+
+  local -a card_files
+  for card_id_json in $(jq -r '.slots | keys | .[]' <<<"$DECK_JSON"); do
+    card_files+=($(get_card_file $card_id_json))
+  done
+
+  if $SUPER_ALPHABETICAL_ORDER; then
+    print_alphabetically "${card_files[@]}"
+  elif $RELEASE_ORDER; then
+    print_cards "${card_files[@]}"
+  else
+    local cards_json=$(jq -cn '[inputs] | group_by(if .faction_code == "guardian" then 1
+      elif .faction_code == "seeker" then 2
+      elif .faction_code == "rogue" then 3
+      elif .faction_code == "mystic" then 4
+      elif .faction_code == "survivor" then 5
+      elif .subtype_code == "basicweakness" then 7
+      elif .subtype_code == "weakness" then 7
+      elif .faction_code == "neutral" then 6
+      else 99 end)' "${card_files[@]}")
+    print_factions "$cards_json"
+  fi
+}
+
+while getopts 'd:l:ar' opt; do
+  case $opt in
+    d)
+      DECK_JSON="$(curl -s "${ARKHAMDB_API_URL}/deck/${OPTARG}")"
+      ;;
+    l)
+      DECK_JSON="$(curl -s "${ARKHAMDB_API_URL}/decklist/${OPTARG}")"
+      ;;
+    a)
+      if $ALPHABETICAL_ORDER; then
+        SUPER_ALPHABETICAL_ORDER=true
+      fi
+      ALPHABETICAL_ORDER=true
+      ;;
+    r)
+      RELEASE_ORDER=true
+      ;;
+  esac
+done
+
+if [ -z "$DECK_JSON" ]; then
+  if [ -t 0 ]; then
+    printf '\e[91mNo input!\e[0m\n' >&2
+    exit 1
+  fi
+  read -rd '' DECK_JSON
+fi
+
+print_deck
