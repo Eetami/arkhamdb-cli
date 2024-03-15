@@ -11,7 +11,7 @@ declare RELEASE_ORDER=false
 declare SUPER_ALPHABETICAL_ORDER=false
 declare DECK_JSON
 
-get_packs_file() {
+init_packs() {
   if [ ! -d $ARKHAMDB_CACHE ]; then
     mkdir -p $ARKHAMDB_CACHE
   fi
@@ -23,6 +23,10 @@ get_packs_file() {
   local -a pack_ids=($(jq -r '.[] | @text "\(.code)=\(.id)"' <$PACKS_CACHE))
   local -a pack_cycles=($(jq -r '.[] | @text "cycle_\(.code)=\(.cycle_position)"' <$PACKS_CACHE))
   export "${pack_ids[@]}" "${pack_cycles[@]}"
+}
+
+init_factions() {
+  export guardian=1 seeker=2 rogue=3 mystic=4 survivor=5 neutral=6 basicweakness=7 weakness=7
 }
 
 get_cycle_name() {
@@ -208,15 +212,7 @@ print_cards() {
 group_by_faction() {
   local cards_json="$1"
 
-  jq -c 'group_by(if .faction_code == "guardian" then 1
-      elif .faction_code == "seeker" then 2
-      elif .faction_code == "rogue" then 3
-      elif .faction_code == "mystic" then 4
-      elif .faction_code == "survivor" then 5
-      elif .subtype_code == "basicweakness" then 7
-      elif .subtype_code == "weakness" then 7
-      elif .faction_code == "neutral" then 6
-      else 99 end)' <<<"$cards_json"
+  jq -c 'group_by(if .subtype_code != null then env[.subtype_code] else env[.faction_code] end | tonumber)' <<<"$cards_json"
 }
 
 print_packs() {
@@ -263,20 +259,13 @@ print_deck() {
   elif $PACK_ORDER; then
     print_packs "${card_files[@]}"
   else
-    local cards_json=$(jq -cn '[inputs] | group_by(if .faction_code == "guardian" then 1
-      elif .faction_code == "seeker" then 2
-      elif .faction_code == "rogue" then 3
-      elif .faction_code == "mystic" then 4
-      elif .faction_code == "survivor" then 5
-      elif .subtype_code == "basicweakness" then 7
-      elif .subtype_code == "weakness" then 7
-      elif .faction_code == "neutral" then 6
-      else 99 end)' "${card_files[@]}")
+    local cards_json=$(jq -cn '[inputs] | group_by(if .subtype_code != null then env[.subtype_code] else env[.faction_code] end | tonumber)' "${card_files[@]}")
     print_factions "$cards_json"
   fi
 }
 
-get_packs_file
+init_factions
+init_packs
 
 while getopts 'd:l:acpr' opt; do
   case $opt in
