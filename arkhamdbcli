@@ -5,6 +5,7 @@ declare ARKHAMDB_CACHE="${HOME}/.arkhamdb"
 declare PACKS_CACHE="${ARKHAMDB_CACHE}/packs.json"
 declare CARDS_CACHE="${ARKHAMDB_CACHE}/cards"
 declare ALPHABETICAL_ORDER=false
+declare CYCLE_ORDER=false
 declare PACK_ORDER=false
 declare RELEASE_ORDER=false
 declare SUPER_ALPHABETICAL_ORDER=false
@@ -20,7 +21,62 @@ get_packs_file() {
   fi
 
   local -a pack_ids=($(jq -r '.[] | @text "\(.code)=\(.id)"' <$PACKS_CACHE))
-  export "${pack_ids[@]}"
+  local -a pack_cycles=($(jq -r '.[] | @text "cycle_\(.code)=\(.cycle_position)"' <$PACKS_CACHE))
+  export "${pack_ids[@]}" "${pack_cycles[@]}"
+}
+
+get_cycle_name() {
+  local -i cycle_position=$1
+
+  case $cycle_position in
+    1)
+      printf 'The Night of the Zealot'
+      ;;
+    2)
+      printf 'The Dunwich Legacy'
+      ;;
+    3)
+      printf 'The Path to Carcosa'
+      ;;
+    4)
+      printf 'The Forgotten Age'
+      ;;
+    5)
+      printf 'The Circle Undone'
+      ;;
+    6)
+      printf 'The Dream-Eaters'
+      ;;
+    7)
+      printf 'The Innsmouth Conspiracy'
+      ;;
+    8)
+      printf 'Edge of the Earth'
+      ;;
+    9)
+      printf 'The Scarlet Keys'
+      ;;
+    10)
+      printf 'The Feast of Hemlock Vale'
+      ;;
+    50)
+      printf 'Return to...'
+      ;;
+    60)
+      printf 'Investigator Starter Decks'
+      ;;
+    70)
+      printf 'Side Stories'
+      ;;
+    80)
+      printf 'Promotional'
+      ;;
+    90)
+      printf 'Parallel'
+      ;;
+  esac
+
+  printf '\n'
 }
 
 print_faction_color() {
@@ -168,6 +224,27 @@ print_packs() {
   done
 }
 
+print_cycles() {
+  local IFS='
+'
+  for cycle_json in $(jq -cn '[inputs] | group_by(@text "cycle_\(.pack_code)" as $pack | env[$pack] | tonumber) | .[]' "$@"); do
+    local pack_id="cycle_$(jq -r '.[0].pack_code' <<<"$cycle_json")"
+    local cycle_position=$(jq -nr --arg pack_id $pack_id 'env[$pack_id]')
+    local cycle_name=$(get_cycle_name $cycle_position)
+    printf '%s\n' "$cycle_name"
+    local factions_json=$(jq -c 'group_by(if .faction_code == "guardian" then 1
+      elif .faction_code == "seeker" then 2
+      elif .faction_code == "rogue" then 3
+      elif .faction_code == "mystic" then 4
+      elif .faction_code == "survivor" then 5
+      elif .subtype_code == "basicweakness" then 7
+      elif .subtype_code == "weakness" then 7
+      elif .faction_code == "neutral" then 6
+      else 99 end)' <<<"$cycle_json")
+    print_factions "$factions_json"
+  done
+}
+
 print_deck() {
   local deck_name=$(jq -r '.name' <<<"$DECK_JSON")
   local investigator_name=$(jq -r '.investigator_name' <<<"$DECK_JSON")
@@ -183,6 +260,8 @@ print_deck() {
     print_alphabetically "${card_files[@]}"
   elif $RELEASE_ORDER; then
     print_cards "${card_files[@]}"
+  elif $CYCLE_ORDER; then
+    print_cycles "${card_files[@]}"
   elif $PACK_ORDER; then
     print_packs "${card_files[@]}"
   else
@@ -201,7 +280,7 @@ print_deck() {
 
 get_packs_file
 
-while getopts 'd:l:apr' opt; do
+while getopts 'd:l:acpr' opt; do
   case $opt in
     d)
       DECK_JSON="$(curl -s "${ARKHAMDB_API_URL}/deck/${OPTARG}")"
@@ -214,6 +293,9 @@ while getopts 'd:l:apr' opt; do
         SUPER_ALPHABETICAL_ORDER=true
       fi
       ALPHABETICAL_ORDER=true
+      ;;
+    c)
+      CYCLE_ORDER=true
       ;;
     p)
       PACK_ORDER=true
