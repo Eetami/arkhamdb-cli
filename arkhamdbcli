@@ -205,13 +205,10 @@ print_cards() {
   done
 }
 
-print_packs() {
-  local IFS='
-'
-  for pack_json in $(jq -cn '[inputs] | group_by(.pack_code as $pack | env[$pack] | tonumber) | .[]' "$@"); do
-    local pack_name=$(jq -r '.[0].pack_name' <<<"$pack_json")
-    printf '%s\n' "$pack_name"
-    local factions_json=$(jq -c 'group_by(if .faction_code == "guardian" then 1
+group_by_faction() {
+  local cards_json="$1"
+
+  jq -c 'group_by(if .faction_code == "guardian" then 1
       elif .faction_code == "seeker" then 2
       elif .faction_code == "rogue" then 3
       elif .faction_code == "mystic" then 4
@@ -219,7 +216,16 @@ print_packs() {
       elif .subtype_code == "basicweakness" then 7
       elif .subtype_code == "weakness" then 7
       elif .faction_code == "neutral" then 6
-      else 99 end)' <<<"$pack_json")
+      else 99 end)' <<<"$cards_json"
+}
+
+print_packs() {
+  local IFS='
+'
+  for pack_json in $(jq -cn '[inputs] | group_by(.pack_code as $pack | env[$pack] | tonumber) | .[]' "$@"); do
+    local pack_name=$(jq -r '.[0].pack_name' <<<"$pack_json")
+    printf '%s\n' "$pack_name"
+    local factions_json=$(group_by_faction "$pack_json")
     print_factions "$factions_json"
   done
 }
@@ -232,15 +238,7 @@ print_cycles() {
     local cycle_position=$(jq -nr --arg pack_id $pack_id 'env[$pack_id]')
     local cycle_name=$(get_cycle_name $cycle_position)
     printf '%s\n' "$cycle_name"
-    local factions_json=$(jq -c 'group_by(if .faction_code == "guardian" then 1
-      elif .faction_code == "seeker" then 2
-      elif .faction_code == "rogue" then 3
-      elif .faction_code == "mystic" then 4
-      elif .faction_code == "survivor" then 5
-      elif .subtype_code == "basicweakness" then 7
-      elif .subtype_code == "weakness" then 7
-      elif .faction_code == "neutral" then 6
-      else 99 end)' <<<"$cycle_json")
+    local factions_json=$(group_by_faction "$cycle_json")
     print_factions "$factions_json"
   done
 }
@@ -252,8 +250,8 @@ print_deck() {
   printf '%s (\e[90m%s\e[0m)\n' "$deck_name" "$investigator_name"
 
   local -a card_files
-  for card_id_json in $(jq -r '.slots | keys | .[]' <<<"$DECK_JSON"); do
-    card_files+=($(get_card_file $card_id_json))
+  for card_id in $(jq -r '.slots | keys | .[]' <<<"$DECK_JSON"); do
+    card_files+=($(get_card_file $card_id))
   done
 
   if $SUPER_ALPHABETICAL_ORDER; then
