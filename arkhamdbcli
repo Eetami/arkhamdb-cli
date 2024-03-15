@@ -111,9 +111,10 @@ print_card() {
   local card_json="$1"
 
   local card_id="$(jq -r '.code' <<<$card_json)"
-  local amount=$(jq -r --arg card_id $card_id '.slots[$card_id]' <<<"${DECK_JSON}")
+  local amount=$(jq -r --arg card_id $card_id '.slots[$card_id]' <<<$DECK_JSON)
   local faction_code="$(jq -r '.faction_code' <<<$card_json)"
   local card_name="$(jq -r '.real_name' <<<$card_json)"
+  local xp="$(jq -r '.xp' <<<$card_json)"
   local pack_name="$(jq -r '.pack_name' <<<$card_json)"
   local position="$(jq -r '.position' <<<$card_json)"
 
@@ -121,7 +122,11 @@ print_card() {
 
   print_faction_color "$faction_code"
 
-  printf '%s\e[0m ' "$card_name"
+  printf '%s\e[0m' "$card_name"
+  for ((i = 0; i < xp; i++)); do
+    printf '\u2022'
+  done
+  printf ' '
 
   printf '(%s #%d)\n' "$pack_name" "$position"
 }
